@@ -7,12 +7,16 @@ import (
 )
 
 type cliCommand struct {
-	name string
+	name        string
 	description string
-	callback func() error
+	callback    func(*config) error
 }
 
-func getCommands() map[string]cliCommand {
+type config struct {
+	commands map[string]cliCommand
+}
+
+func commandRegistry() map[string]cliCommand {
 	return map[string]cliCommand{
 		"exit": {
 			name:        "exit",
@@ -31,18 +35,18 @@ func cleanInput(text string) []string {
 	return strings.Fields(text)
 }
 
-func commandExit() error {
+func commandExit(c *config) error {
 	fmt.Println("Closing the Pokedex... Goodbye!")
 	os.Exit(0)
 	return nil
 }
 
-func commandHelp() error {
+func commandHelp(c *config) error {
 	fmt.Println("Welcome to the Pokedex!")
 	fmt.Println("Usage:")
 	fmt.Println()
-	for cmd := range getCommands() {
-		fmt.Printf("%s: %s\n", getCommands()[cmd].name, getCommands()[cmd].description)
+	for cmd := range c.commands {
+		fmt.Printf("%s: %s\n", c.commands[cmd].name, c.commands[cmd].description)
 	}
 	return nil
 }
