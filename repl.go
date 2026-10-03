@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"os"
 	"strings"
+
+	"github.com/L0rable/pokedexcli/internal"
 )
 
 type cliCommand struct {
@@ -13,7 +15,8 @@ type cliCommand struct {
 }
 
 type config struct {
-	commands map[string]cliCommand
+	commands  map[string]cliCommand
+	mapOffset int
 }
 
 func commandRegistry() map[string]cliCommand {
@@ -27,6 +30,16 @@ func commandRegistry() map[string]cliCommand {
 			name:        "help",
 			description: "Displays a help message",
 			callback:    commandHelp,
+		},
+		"map": {
+			name:        "map",
+			description: "Displays names of 20 location areas",
+			callback:    commandMap,
+		},
+		"mapb": {
+			name:        "mapb",
+			description: "Displays names of the 20 previous location areas",
+			callback:    commandMapBack,
 		},
 	}
 }
@@ -47,6 +60,36 @@ func commandHelp(c *config) error {
 	fmt.Println()
 	for cmd := range c.commands {
 		fmt.Printf("%s: %s\n", c.commands[cmd].name, c.commands[cmd].description)
+	}
+	return nil
+}
+
+func commandMap(c *config) error {
+	c.mapOffset++
+
+	locations, err := internal.GetLocationAreas(c.mapOffset)
+	if err != nil {
+		return err
+	}
+
+	for _, l := range locations.Result {
+		fmt.Println(l.Name)
+	}
+	return nil
+}
+
+func commandMapBack(c *config) error {
+	if c.mapOffset > 0 {
+		c.mapOffset--
+	}
+
+	locations, err := internal.GetLocationAreas(c.mapOffset)
+	if err != nil {
+		return err
+	}
+
+	for _, l := range locations.Result {
+		fmt.Println(l.Name)
 	}
 	return nil
 }
