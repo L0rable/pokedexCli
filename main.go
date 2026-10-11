@@ -5,14 +5,22 @@ import (
 	"fmt"
 	"os"
 	"strings"
+	"time"
+
+	"github.com/L0rable/pokedexcli/internal"
+	"github.com/L0rable/pokedexcli/internal/pokecache"
 )
 
 func main() {
 	scanner := bufio.NewScanner(os.Stdin)
 	config := config{
-		commands: commandRegistry(),
+		commands:  commandRegistry(),
+		client:    internal.Client{},
 		mapOffset: -1,
 	}
+	// 5 minute interval
+	config.client.Cache = *pokecache.NewCache(5 * time.Second)
+
 	for {
 		fmt.Print("Pokedex > ")
 		if scanner.Scan() {

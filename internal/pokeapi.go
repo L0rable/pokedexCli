@@ -5,7 +5,13 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+
+	"github.com/L0rable/pokedexcli/internal/pokecache"
 )
+
+type Client struct {
+	Cache pokecache.Cache
+}
 
 type LocationAreasApi struct {
 	Result []LocationAreaApi `json:"results"`
@@ -16,20 +22,29 @@ type LocationAreaApi struct {
 	Url  string `json:"url"`
 }
 
-func GetLocationAreas(offSet int) (LocationAreasApi, error) {
+func (c *Client) GetLocationAreas(offSet int) (LocationAreasApi, error) {
 	url := fmt.Sprintf("https://pokeapi.co/api/v2/location-area?offset=%d", offSet*20)
-	res, err := http.Get(url)
-	if err != nil {
-		return LocationAreasApi{}, err
-	}
 
-	data, err := io.ReadAll(res.Body)
-	if err != nil {
-		return LocationAreasApi{}, err
+	var data []byte
+	if dataBytes, found := c.Cache.Get(url); found {
+		data = dataBytes
+	} else {
+		res, err := http.Get(url)
+		if err != nil {
+			return LocationAreasApi{}, err
+		}
+
+		data, err = io.ReadAll(res.Body)
+		if err != nil {
+			return LocationAreasApi{}, err
+		}
+
+		// Add to cache
+		c.Cache.Add(url, data)
 	}
 
 	locations := LocationAreasApi{}
-	err = json.Unmarshal(data, &locations)
+	err := json.Unmarshal(data, &locations)
 	if err != nil {
 		fmt.Println(err)
 		return LocationAreasApi{}, err

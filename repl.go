@@ -16,6 +16,7 @@ type cliCommand struct {
 
 type config struct {
 	commands  map[string]cliCommand
+	client    internal.Client
 	mapOffset int
 }
 
@@ -67,7 +68,7 @@ func commandHelp(c *config) error {
 func commandMap(c *config) error {
 	c.mapOffset++
 
-	locations, err := internal.GetLocationAreas(c.mapOffset)
+	locations, err := c.client.GetLocationAreas(c.mapOffset)
 	if err != nil {
 		return err
 	}
@@ -83,7 +84,7 @@ func commandMapBack(c *config) error {
 		c.mapOffset--
 	}
 
-	locations, err := internal.GetLocationAreas(c.mapOffset)
+	locations, err := c.client.GetLocationAreas(c.mapOffset)
 	if err != nil {
 		return err
 	}
