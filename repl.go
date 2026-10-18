@@ -61,6 +61,11 @@ func commandRegistry() map[string]cliCommand {
 			description: "Display information about the caught Pokemon",
 			callback:    commandInspect,
 		},
+		"pokedex": {
+			name:        "pokedex",
+			description: "Display all the Pokemon the user has caught",
+			callback:    commandPokedex,
+		},
 	}
 }
 
@@ -177,6 +182,15 @@ func commandInspect(c *config) error {
 		}
 	} else {
 		fmt.Println("you have not caught that pokemon")
+	}
+
+	return nil
+}
+
+func commandPokedex(c *config) error {
+	fmt.Println("Your Pokedex:")
+	for _, pokemon := range c.pokemonCaught {
+		fmt.Println(" - ", pokemon.Name)
 	}
 
 	return nil
