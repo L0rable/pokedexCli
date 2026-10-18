@@ -56,6 +56,11 @@ func commandRegistry() map[string]cliCommand {
 			description: "Chance to catch a specified Pokemon",
 			callback:    commandCatch,
 		},
+		"inspect": {
+			name:        "inspect",
+			description: "Display information about the caught Pokemon",
+			callback:    commandInspect,
+		},
 	}
 }
 
@@ -111,7 +116,7 @@ func commandMapBack(c *config) error {
 
 func commandExplore(c *config) error {
 	if len(c.params) < 1 {
-		return errors.New("No Location Id or Name was passed into explore")
+		return errors.New("No Location Id or Name was passed into Explore command")
 	}
 
 	location, err := c.client.GetLocationArea(c.params[0])
@@ -131,8 +136,8 @@ func commandExplore(c *config) error {
 const BaseExperience = 100
 
 func commandCatch(c *config) error {
-	if len(c.params) < 1 {
-		return errors.New("No Pokemon Id or Name was passed into explore")
+	if len(c.params) == 0 {
+		return errors.New("No Pokemon Id or Name was passed into Catch command")
 	}
 
 	pokemon, err := c.client.GetPokemon(c.params[0])
@@ -148,6 +153,30 @@ func commandCatch(c *config) error {
 		c.pokemonCaught[pokemon.Name] = pokemon
 	} else {
 		fmt.Println(pokemon.Name, "escaped!")
+	}
+
+	return nil
+}
+
+func commandInspect(c *config) error {
+	if len(c.params) == 0 {
+		return errors.New("No Pokemon Id or Name was passed into catch")
+	}
+
+	if pokemon, caught := c.pokemonCaught[c.params[0]]; caught {
+		fmt.Println("Name:", pokemon.Name)
+		fmt.Println("Height:", pokemon.Height)
+		fmt.Println("Weight:", pokemon.Weight)
+		fmt.Println("Stats:")
+		for _, s := range pokemon.Stats {
+			fmt.Printf("  -%s: %d\n", s.Stat.Name, s.BaseStat)
+		}
+		fmt.Println("Types:")
+		for _, t := range pokemon.Types {
+			fmt.Printf("  -%s\n", t.Type.Name)
+		}
+	} else {
+		fmt.Println("you have not caught that pokemon")
 	}
 
 	return nil
