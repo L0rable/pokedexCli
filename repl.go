@@ -3,6 +3,7 @@ package main
 import (
 	"errors"
 	"fmt"
+	"math/rand"
 	"os"
 	"strings"
 
@@ -16,10 +17,11 @@ type cliCommand struct {
 }
 
 type config struct {
-	commands  map[string]cliCommand
-	client    internal.Client
-	mapOffset int
-	params    []string
+	commands      map[string]cliCommand
+	client        internal.Client
+	mapOffset     int
+	params        []string
+	pokemonCaught map[string]internal.PokemonApi
 }
 
 func commandRegistry() map[string]cliCommand {
@@ -48,6 +50,11 @@ func commandRegistry() map[string]cliCommand {
 			name:        "explore",
 			description: "List all of the Pokemon located in location area",
 			callback:    commandExplore,
+		},
+		"catch": {
+			name:        "catch",
+			description: "Chance to catch a specified Pokemon",
+			callback:    commandCatch,
 		},
 	}
 }
@@ -104,7 +111,7 @@ func commandMapBack(c *config) error {
 
 func commandExplore(c *config) error {
 	if len(c.params) < 1 {
-		return errors.New("No location Id or Name was passed into explore")
+		return errors.New("No Location Id or Name was passed into explore")
 	}
 
 	location, err := c.client.GetLocationArea(c.params[0])
@@ -116,6 +123,31 @@ func commandExplore(c *config) error {
 	fmt.Println("Found Pokemon:")
 	for _, p := range location.PokemonEncounters {
 		fmt.Println(" - ", p.Pokemon.Name)
+	}
+
+	return nil
+}
+
+const BaseExperience = 100
+
+func commandCatch(c *config) error {
+	if len(c.params) < 1 {
+		return errors.New("No Pokemon Id or Name was passed into explore")
+	}
+
+	pokemon, err := c.client.GetPokemon(c.params[0])
+	if err != nil {
+		return err
+	}
+
+	// Check to see if Pokemon is captured
+	roll := rand.Intn(BaseExperience)
+	fmt.Printf("Throwing a Pokeball at %s...\n", pokemon.Name)
+	if roll >= pokemon.BaseExperience {
+		fmt.Println(pokemon.Name, "was caught!")
+		c.pokemonCaught[pokemon.Name] = pokemon
+	} else {
+		fmt.Println(pokemon.Name, "escaped!")
 	}
 
 	return nil

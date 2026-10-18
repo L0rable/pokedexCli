@@ -18,8 +18,8 @@ type LocationAreasApi struct {
 }
 
 type LocationAreaApi struct {
-	Name string `json:"name"`
-	Url  string `json:"url"`
+	Name              string `json:"name"`
+	Url               string `json:"url"`
 	PokemonEncounters []struct {
 		Pokemon struct {
 			Name string `json:"name"`
@@ -59,8 +59,8 @@ func (c *Client) GetLocationAreas(offSet int) (LocationAreasApi, error) {
 	return locations, nil
 }
 
-func (c *Client) GetLocationArea(locationAreaName string) (LocationAreaApi, error) {
-	url := fmt.Sprintf("https://pokeapi.co/api/v2/location-area/%s", locationAreaName)
+func (c *Client) GetLocationArea(locationAreaIdOrName string) (LocationAreaApi, error) {
+	url := fmt.Sprintf("https://pokeapi.co/api/v2/location-area/%s", locationAreaIdOrName)
 
 	var data []byte
 	if dataBytes, found := c.Cache.Get(url); found {
@@ -88,4 +88,41 @@ func (c *Client) GetLocationArea(locationAreaName string) (LocationAreaApi, erro
 	}
 
 	return location, nil
+}
+
+type PokemonApi struct {
+	Id             int    `json:"id"`
+	Name           string `json:"name"`
+	BaseExperience int    `json:"base_experience"`
+}
+
+func (c *Client) GetPokemon(pokemonIdOrName string) (PokemonApi, error) {
+	url := fmt.Sprintf("https://pokeapi.co/api/v2/pokemon/%s", pokemonIdOrName)
+
+	var data []byte
+	if dataBytes, found := c.Cache.Get(url); found {
+		data = dataBytes
+	} else {
+		res, err := http.Get(url)
+		if err != nil {
+			return PokemonApi{}, err
+		}
+
+		data, err = io.ReadAll(res.Body)
+		if err != nil {
+			return PokemonApi{}, err
+		}
+
+		// Add to cache
+		c.Cache.Add(url, data)
+	}
+
+	pokemon := PokemonApi{}
+	err := json.Unmarshal(data, &pokemon)
+	if err != nil {
+		fmt.Println(err)
+		return PokemonApi{}, err
+	}
+
+	return pokemon, nil
 }
