@@ -20,6 +20,12 @@ type LocationAreasApi struct {
 type LocationAreaApi struct {
 	Name string `json:"name"`
 	Url  string `json:"url"`
+	PokemonEncounters []struct {
+		Pokemon struct {
+			Name string `json:"name"`
+			Url  string `json:"url"`
+		} `json:"pokemon"`
+	} `json:"pokemon_encounters"`
 }
 
 func (c *Client) GetLocationAreas(offSet int) (LocationAreasApi, error) {
@@ -51,4 +57,35 @@ func (c *Client) GetLocationAreas(offSet int) (LocationAreasApi, error) {
 	}
 
 	return locations, nil
+}
+
+func (c *Client) GetLocationArea(locationAreaName string) (LocationAreaApi, error) {
+	url := fmt.Sprintf("https://pokeapi.co/api/v2/location-area/%s", locationAreaName)
+
+	var data []byte
+	if dataBytes, found := c.Cache.Get(url); found {
+		data = dataBytes
+	} else {
+		res, err := http.Get(url)
+		if err != nil {
+			return LocationAreaApi{}, err
+		}
+
+		data, err = io.ReadAll(res.Body)
+		if err != nil {
+			return LocationAreaApi{}, err
+		}
+
+		// Add to cache
+		c.Cache.Add(url, data)
+	}
+
+	location := LocationAreaApi{}
+	err := json.Unmarshal(data, &location)
+	if err != nil {
+		fmt.Println(err)
+		return LocationAreaApi{}, err
+	}
+
+	return location, nil
 }

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"strings"
@@ -18,6 +19,7 @@ type config struct {
 	commands  map[string]cliCommand
 	client    internal.Client
 	mapOffset int
+	params    []string
 }
 
 func commandRegistry() map[string]cliCommand {
@@ -41,6 +43,11 @@ func commandRegistry() map[string]cliCommand {
 			name:        "mapb",
 			description: "Displays names of the 20 previous location areas",
 			callback:    commandMapBack,
+		},
+		"explore": {
+			name:        "explore",
+			description: "List all of the Pokemon located in location area",
+			callback:    commandExplore,
 		},
 	}
 }
@@ -92,5 +99,24 @@ func commandMapBack(c *config) error {
 	for _, l := range locations.Result {
 		fmt.Println(l.Name)
 	}
+	return nil
+}
+
+func commandExplore(c *config) error {
+	if len(c.params) < 1 {
+		return errors.New("No location Id or Name was passed into explore")
+	}
+
+	location, err := c.client.GetLocationArea(c.params[0])
+	if err != nil {
+		return err
+	}
+
+	fmt.Println("Exploring", location.Name, "...")
+	fmt.Println("Found Pokemon:")
+	for _, p := range location.PokemonEncounters {
+		fmt.Println(" - ", p.Pokemon.Name)
+	}
+
 	return nil
 }
